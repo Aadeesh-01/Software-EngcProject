@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base Reset ─────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── Scrollbar Styling ──────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* ── Custom Utilities ───────────────────────────────── */
+@layer utilities {
+  .glass {
+    background: rgba(24, 24, 27, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(63, 63, 70, 0.5);
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #3f3f46, transparent);
+  }
+
+  .input-focus {
+    @apply transition-all duration-200 outline-none;
+    @apply focus:ring-2 focus:ring-primary/30 focus:border-primary;
+  }
+
+  .section-card {
+    @apply bg-surface border border-border rounded-lg p-4 transition-all duration-200;
+    @apply hover:border-border-light;
+  }
+
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-hover text-primary-foreground;
+    @apply px-4 py-2 rounded-lg font-medium text-sm;
+    @apply transition-all duration-200;
+    @apply hover:shadow-glow active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-surface-hover text-muted-foreground hover:text-foreground;
+    @apply px-3 py-2 rounded-lg font-medium text-sm;
+    @apply transition-all duration-200;
+    @apply border border-transparent hover:border-border;
+  }
+
+  .btn-danger {
+    @apply bg-transparent hover:bg-danger/10 text-danger;
+    @apply px-3 py-2 rounded-lg font-medium text-sm;
+    @apply transition-all duration-200;
+    @apply border border-transparent hover:border-danger/30;
+  }
+}
+
+/* ── Print Styles ───────────────────────────────────── */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .resume-preview {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
