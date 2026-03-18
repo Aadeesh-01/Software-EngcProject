@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useResumeEditor } from "./store/useResumeStore";
 import BasicsSection from "./components/Editor/BasicsSection";
@@ -11,6 +11,8 @@ import LanguagesSection from "./components/Editor/LanguagesSection";
 import Leafish from "./templates/Leafish";
 import Gengar from "./templates/Gengar";
 import Castaway from "./templates/Castaway";
+
+import { downloadResumePdf } from "./utils/downloadPdf";
 
 const TEMPLATES: Record<string, React.FC<{ data: any }>> = {
   leafish: Leafish,
@@ -28,6 +30,8 @@ export default function Builder() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { resume, updateData, updateName, updateTemplate } = useResumeEditor(id!);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   if (!resume) {
     return (
@@ -41,6 +45,33 @@ export default function Builder() {
   }
 
   const handlePrint = () => window.print();
+
+  const handleDownloadPdf = async () => {
+    if (!previewRef.current || isDownloading) return;
+    setIsDownloading(true);
+    try {
+      // Temporarily remove preview scaling so html2canvas captures at full size
+      const wrapper = previewRef.current;
+      const prevTransform = wrapper.style.transform;
+      wrapper.style.transform = "none";
+
+      const safeName = (resume.name || "resume")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+
+      await downloadResumePdf(wrapper, `${safeName}.pdf`);
+
+      // Restore scaling
+      wrapper.style.transform = prevTransform;
+    } catch (err) {
+      console.error("PDF download failed:", err);
+      alert("PDF download failed. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const ActiveTemplate = TEMPLATES[resume.template] || Leafish;
 
   return (
@@ -96,6 +127,28 @@ export default function Builder() {
             <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
             Auto-saved
           </span>
+
+          {/* Download PDF */}
+          <button
+            onClick={handleDownloadPdf}
+            disabled={isDownloading}
+            className="btn-success text-xs"
+            id="download-pdf-btn"
+          >
+            <span className="flex items-center gap-1.5">
+              {isDownloading ? (
+                <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+              )}
+              {isDownloading ? "Generating…" : "Download PDF"}
+            </span>
+          </button>
 
           {/* Print */}
           <button onClick={handlePrint} className="btn-ghost text-xs">
@@ -156,7 +209,10 @@ export default function Builder() {
         {/* ── RIGHT: Live Preview Pane ─────────────────── */}
         <main className="flex-1 bg-[#1a1a2e] overflow-y-auto">
           <div className="p-4 sm:p-6 lg:p-8 min-h-full flex items-start justify-center">
-            <div className="w-full max-w-[210mm] transform origin-top scale-[0.65] sm:scale-75 lg:scale-[0.8] xl:scale-90">
+            <div
+              ref={previewRef}
+              className="w-full max-w-[210mm] transform origin-top scale-[0.65] sm:scale-75 lg:scale-[0.8] xl:scale-90"
+            >
               <ActiveTemplate data={resume.data} />
             </div>
           </div>

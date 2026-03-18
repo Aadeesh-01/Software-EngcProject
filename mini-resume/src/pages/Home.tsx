@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useResumeList } from "../store/useResumeStore";
 
@@ -11,6 +11,52 @@ export default function Home() {
   const [newName, setNewName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [authChecked, setAuthChecked] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+
+  // Check if logged in on mount — redirect to /login if not
+  useEffect(() => {
+    fetch("/api/auth/me", { credentials: "include" })
+      .then((res) => {
+        if (!res.ok) throw new Error("Not authenticated");
+        return res.json();
+      })
+      .then((data) => {
+        setUserEmail(data.user?.email || "");
+        setAuthChecked(true);
+      })
+      .catch(() => {
+        navigate("/login");
+      });
+  }, [navigate]);
+
+  // Logout handler
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // ignore
+    }
+    navigate("/login");
+  };
+
+  // Show loading while checking auth
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center gap-3 text-muted">
+          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Loading...
+        </div>
+      </div>
+    );
+  }
 
   const handleCreate = () => {
     const name = newName.trim() || "Untitled Resume";
@@ -63,15 +109,32 @@ export default function Home() {
               <p className="text-muted text-xs">Build beautiful resumes</p>
             </div>
           </div>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="btn-primary flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            New Resume
-          </button>
+          <div className="flex items-center gap-3">
+            {userEmail && (
+              <span className="text-muted text-xs hidden sm:inline">
+                {userEmail}
+              </span>
+            )}
+            <button
+              onClick={() => setShowCreate(true)}
+              className="btn-primary flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              New Resume
+            </button>
+            <button
+              onClick={handleLogout}
+              className="btn-ghost text-xs flex items-center gap-1.5"
+              title="Logout"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
