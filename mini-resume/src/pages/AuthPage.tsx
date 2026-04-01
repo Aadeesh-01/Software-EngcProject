@@ -10,7 +10,6 @@ interface FormErrors {
   confirmPassword?: string;
 }
 
-// ─── Validation Helpers ────────────────────────────────
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PW = 6;
 
@@ -45,7 +44,6 @@ function validate(
   return errors;
 }
 
-// ─── Eye Icons ─────────────────────────────────────────
 function EyeIcon() {
   return (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -63,12 +61,10 @@ function EyeSlashIcon() {
   );
 }
 
-// ─── Main Component ────────────────────────────────────
 export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Determine initial mode from the URL path
   const initialMode: Mode = location.pathname === "/register" ? "register" : "login";
 
   const [mode, setMode] = useState<Mode>(initialMode);
@@ -83,12 +79,10 @@ export default function AuthPage() {
   const [successMsg, setSuccessMsg] = useState("");
   const [serverError, setServerError] = useState("");
 
-  // Sync mode with URL changes
   useEffect(() => {
     setMode(location.pathname === "/register" ? "register" : "login");
   }, [location.pathname]);
 
-  // Validate on every render (cheap)
   const errors = useMemo(
     () => validate(mode, email, password, confirmPassword),
     [mode, email, password, confirmPassword]
@@ -96,14 +90,12 @@ export default function AuthPage() {
 
   const isValid = Object.keys(errors).length === 0;
 
-  // Show error only if field was touched or form was submitted
   const showError = useCallback(
     (field: keyof FormErrors) =>
       (touched[field] || submitted) && errors[field] ? errors[field] : "",
     [touched, submitted, errors]
   );
 
-  // Toggle between login ↔ register
   const switchMode = () => {
     const newMode = mode === "login" ? "register" : "login";
     setMode(newMode);
@@ -115,7 +107,6 @@ export default function AuthPage() {
     setConfirmPassword("");
   };
 
-  // Handle form submit — calls the backend API
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
@@ -129,32 +120,29 @@ export default function AuthPage() {
       const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
       const body: Record<string, string> = { email, password };
       if (mode === "register") {
-        body.name = email.split("@")[0]; // Use part before @ as name
+        body.name = email.split("@")[0]; 
       }
 
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // send session cookie
+        credentials: "include", 
         body: JSON.stringify(body),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        // Show server error message
         setServerError(data.message || "Something went wrong");
         return;
       }
 
-      // Success!
       setSuccessMsg(
         mode === "login"
           ? "🎉 Login Successful! Redirecting…"
           : "🎉 Registered Successfully! Redirecting…"
       );
 
-      // Redirect to dashboard after a brief pause
       setTimeout(() => {
         navigate("/");
       }, 1500);
